@@ -101,3 +101,20 @@ class SubscriptionsController(BaseController):
             ).local_error('404', 'Subscription not found.',
                           ErrorException).local_error('default', 'Error cancelling subscription.', ErrorException)
         ).execute()
+
+    def get_subscription(self, options=dict()):
+        subscription_id = options.get("subscription_id")
+        if not subscription_id:
+            raise ValueError("Missing required parameter: 'subscription_id'")
+
+        return super().new_api_call_builder.request(
+            RequestBuilder().server(Server.DEFAULT).path('/v1/billing/subscriptions/{subscription_id}').http_method(
+                HttpMethodEnum.GET
+            ).template_param(Parameter().key("subscription_id").value(subscription_id).should_encode(True)
+                            ).header_param(Parameter().key("Content-Type").value("application/json")
+                                          ).auth(Single('Oauth2'))
+        ).response(
+            ResponseHandler().deserializer(APIHelper.json_deserialize).is_api_response(True).local_error(
+                "404", "Subscription not found.", ErrorException
+            ).local_error("default", "Error retrieving subscription.", ErrorException)
+        ).execute()
